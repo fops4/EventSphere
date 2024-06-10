@@ -1,0 +1,27 @@
+// AppNavigator.js
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import HomeScreen from './HomeScreen';
+import SignInScreen from './SignInScreen';
+import SignUpScreen from './SignUpScreen';
+import Connexion from './Connexion'; // Assurez-vous que ce chemin est correct
+import { AuthProvider } from './AuthContext';
+
+const Stack = createNativeStackNavigator();
+
+const AppNavigator = () => {
+  return (
+    <AuthProvider>
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName="Connexion">
+          <Stack.Screen name="Home" component={HomeScreen} />
+          <Stack.Screen name="Connexion" component={Connexion} />
+          <Stack.Screen name="Inscription" component={SignUpScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </AuthProvider>
+  );
+};
+
+export default AppNavigator;
