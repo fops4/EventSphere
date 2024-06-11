@@ -1,14 +1,15 @@
+// screens/FavoritesScreen.js
 import React, {useState, useEffect} from 'react';
 import {
   View,
-  StyleSheet,
   ScrollView,
+  StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
   Alert,
   Share,
 } from 'react-native';
-import {Text, Button, Card, Title, Paragraph} from 'react-native-paper';
+import {Text, Card, Title, Paragraph, Button} from 'react-native-paper';
 import {API_URL} from '../service/api';
 
 const FavoritesScreen = ({navigation, route}) => {
@@ -34,7 +35,7 @@ const FavoritesScreen = ({navigation, route}) => {
         }
       } catch (error) {
         setError(error.message);
-        Alert.alert('Error', error.message);
+        Alert.alert('Erreur', error.message);
       } finally {
         setLoadingUserInfo(false);
       }
@@ -74,18 +75,21 @@ const FavoritesScreen = ({navigation, route}) => {
     setRefreshing(false);
   };
 
-  const handleShare = async (event) => {
+  const handleShare = async event => {
     try {
       await Share.share({
-        message: `Événement : ${event.title}\nDate : ${new Date(event.date).toLocaleString()}\nLocalisation : ${event.localisation}\nDescription : ${event.description}`,
+        message: `Événement : ${event.title}\nDate : ${new Date(
+          event.date,
+        ).toLocaleString()}\nLocalisation : ${
+          event.localisation
+        }\nDescription : ${event.description}`,
         url: event.image,
-        title: 'Partager cet événement'
+        title: 'Partager cet événement',
       });
     } catch (error) {
       Alert.alert('Erreur', 'Erreur lors du partage');
     }
   };
-
 
   const handleEdit = eventId => {
     navigation.navigate('EditEventScreen', {eventId});
@@ -121,6 +125,10 @@ const FavoritesScreen = ({navigation, route}) => {
     );
   };
 
+  const handleViewDetails = eventId => {
+    navigation.navigate('EventDetailScreen', {eventId});
+  };
+
   if (loadingUserInfo || loadingEvents) {
     return (
       <View style={styles.loadingContainer}>
@@ -131,42 +139,63 @@ const FavoritesScreen = ({navigation, route}) => {
 
   if (error) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Erreur: {error}</Text>
-      </View>
+      <ScrollView style={styles.container} onRefresh={refreshPublications}>
+        <Text style={styles.sectionTitle}>Mes événements</Text>
+        <TouchableOpacity
+          style={styles.saveButton}
+          onPress={() => navigation.navigate('CreateEventScreen')}>
+          <Text style={styles.saveButtonText}>Organiser</Text>
+        </TouchableOpacity>
+        <View style={styles.section}>
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        </View>
+      </ScrollView>
+    );
+  } else {
+    return (
+      <ScrollView style={styles.container} onRefresh={refreshPublications}>
+        <Text style={styles.sectionTitle}>Mes événements</Text>
+        <TouchableOpacity
+          style={styles.saveButton}
+          onPress={() => navigation.navigate('CreateEventScreen')}>
+          <Text style={styles.saveButtonText}>Organiser</Text>
+        </TouchableOpacity>
+        <View style={styles.section}>
+          {events.length > 0 ? (
+            events.map(item => (
+              <Card key={item.id} style={styles.card}>
+                <Card.Cover source={{uri: item.image}} />
+                <Card.Content>
+                  <Title>{item.title}</Title>
+                  <Paragraph>
+                    Date: {new Date(item.date).toLocaleString()}
+                  </Paragraph>
+                </Card.Content>
+                <Card.Actions>
+                  <Button onPress={() => handleShare(item)}>Partager</Button>
+                  <Button
+                    style={styles.bts}
+                    onPress={() => handleEdit(item.id)}>
+                    Modifier
+                  </Button>
+                  <Button
+                    style={styles.btss}
+                    onPress={() => handleDelete(item.id)}>
+                    Supprimer
+                  </Button>
+                  <Button>Voir les détails</Button>
+                </Card.Actions>
+              </Card>
+            ))
+          ) : (
+            <Text>Aucun événement trouvé</Text>
+          )}
+        </View>
+      </ScrollView>
     );
   }
-
-  return (
-    <ScrollView style={styles.container} onRefresh={refreshPublications}>
-      <Text style={styles.sectionTitle}>Mes evenements</Text>
-      <TouchableOpacity
-        style={styles.saveButton}
-        onPress={() => navigation.navigate('CreateEventScreen')}>
-        <Text style={styles.saveButtonText}>Organiser</Text>
-      </TouchableOpacity>
-      <View style={styles.section}>
-        {events.length > 0 ? (
-          events.map(item => (
-            <Card key={item.id} style={styles.card}>
-              <Card.Cover source={{uri: item.image}} />
-              <Card.Content>
-                <Title>{item.title}</Title>
-                <Paragraph>{item.date}</Paragraph>
-              </Card.Content>
-              <Card.Actions>
-                <Button onPress={() => handleShare(item)}>Partager</Button>
-                <Button style={styles.bts} onPress={() => handleEdit(item.id)}>Modifier</Button>
-                <Button style={styles.btss} onPress={() => handleDelete(item.id)}>Supprimer</Button>
-              </Card.Actions>
-            </Card>
-          ))
-        ) : (
-          <Text>Aucun événement trouvé</Text>
-        )}
-      </View>
-    </ScrollView>
-  );
 };
 
 const styles = StyleSheet.create({

@@ -13,6 +13,7 @@ import HomeScreen from './frontEnd/HomeScreen';
 import SearchScreen from './frontEnd/SearchScreen';
 import FavoritesScreen from './frontEnd/FavoritesScreen';
 import TicketScreen from './frontEnd/TicketScreen';
+import EventDetailScreen from './frontEnd/EventDetailScreen';
 import ProfileScreen from './frontEnd/ProfileScreen';
 import Connexion from './frontEnd/Connexion';
 import ResetPasswordScreen from './frontEnd/ResetPasswordScreen';
@@ -131,6 +132,10 @@ const App = () => {
             />
             <Stack.Screen name="EditEventScreen" component={EditEventScreen} />
             <Stack.Screen name="FavoritesScreen" component={FavoritesScreen} />
+            <Stack.Screen
+              name="EventDetailScreen"
+              component={EventDetailScreen}
+            />
             <Stack.Screen
               name="ReservedTicketsScreen"
               component={ReservedTicketsScreen}

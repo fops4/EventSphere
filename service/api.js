@@ -21,7 +21,7 @@ export const creerUtilisateur = async (selectedImage, username, email, password)
 
 export const connecterUtilisateur = async (email, password) => {
   console.log(email, password)
-  try {
+  try {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
     const response = await axios.post(`${API_URL}/login`, {
       email,
       password

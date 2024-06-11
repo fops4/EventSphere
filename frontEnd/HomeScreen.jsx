@@ -20,8 +20,10 @@ import {
   Appbar,
 } from 'react-native-paper';
 import {API_URL} from '../service/api';
+import {useNavigation} from '@react-navigation/native';
 
 const EventItem = ({event}) => {
+  const navigation = useNavigation();
   const {
     type,
     date,
@@ -101,6 +103,18 @@ const EventItem = ({event}) => {
     }
   };
 
+  const handlePayPress = amount => {
+    if (amount) {
+      navigation.navigate('PaymentScreen', {
+        amount,
+        reserveur: userInfo.id,
+        evenement_id: event.id,
+      });
+    } else {
+      Alert.alert('Erreur', "Le montant de l'événement n'est pas défini");
+    }
+  };
+
   return (
     <View style={styles.section}>
       <Card style={styles.card}>
@@ -168,7 +182,7 @@ const EventItem = ({event}) => {
           </Card.Content>
           <Card.Actions style={styles.btn_modale}>
             <Button onPress={() => setModalVisible(false)}>Fermer</Button>
-            <Button onPress={handleReserve}>Réserver</Button>
+            <Button onPress={() => handlePayPress(amount)}>Reserver</Button>
           </Card.Actions>
         </View>
       </Modal>
@@ -176,7 +190,7 @@ const EventItem = ({event}) => {
   );
 };
 
-const HomeScreen = ({route, navigation, title = 'Title'}) => {
+const HomeScreen = ({route, navigation}) => {
   const [userInfo, setUserInfo] = useState(route.params?.userInfo || null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -245,28 +259,47 @@ const HomeScreen = ({route, navigation, title = 'Title'}) => {
 
   if (error) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Erreur: {error}</Text>
+      <View style={styles.container}>
+        <Appbar.Header style={styles.header}>
+          <View style={styles.logos}>
+            <Image
+              source={logoSource}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+          </View>
+          <Appbar.Action icon="menu" />
+          <Appbar.Content />
+        </Appbar.Header>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}> {error}</Text>
+        </View>
+      </View>
+    );
+  } else {
+    return (
+      <View style={styles.container}>
+        <Appbar.Header style={styles.header}>
+          <View style={styles.logos}>
+            <Image
+              source={logoSource}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+          </View>
+          <Appbar.Action icon="menu" />
+          <Appbar.Content />
+        </Appbar.Header>
+        <FlatList
+          data={events}
+          renderItem={({item}) => (
+            <EventItem event={item} navigation={navigation} />
+          )}
+          keyExtractor={item => item.id.toString()}
+        />
       </View>
     );
   }
-
-  return (
-    <View style={styles.container}>
-      <Appbar.Header style={styles.header}>
-        <View style={styles.logos}>
-        <Image source={logoSource} style={styles.logo} resizeMode="contain" />
-        </View>
-        <Appbar.Action icon="menu" />
-        <Appbar.Content />
-      </Appbar.Header>
-      <FlatList
-        data={events}
-        renderItem={({item}) => <EventItem event={item} />}
-        keyExtractor={item => item.id.toString()}
-      />
-    </View>
-  );
 };
 
 const styles = StyleSheet.create({

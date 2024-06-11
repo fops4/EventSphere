@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   ScrollView,
@@ -9,13 +9,13 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { TextInput, Card, Text } from 'react-native-paper';
-import { Picker } from '@react-native-picker/picker';
+import {TextInput, Card, Text} from 'react-native-paper';
+import {Picker} from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'react-native-image-picker';
-import { creerEvenement, API_URL } from '../service/api';
+import {creerEvenement, API_URL} from '../service/api';
 
-const CreateEventScreen = ({ route, navigation }) => {
+const CreateEventScreen = ({route, navigation}) => {
   const [title, setTitle] = useState('');
   const [type, setType] = useState('free');
   const [amount, setAmount] = useState('');
@@ -30,7 +30,7 @@ const CreateEventScreen = ({ route, navigation }) => {
   const [showTimeEndPicker, setShowTimeEndPicker] = useState(false);
   const [image, setImage] = useState(null);
   const [localisation, setLocalisation] = useState('');
-  
+
   const [userInfo, setUserInfo] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -61,12 +61,25 @@ const CreateEventScreen = ({ route, navigation }) => {
   }, []);
 
   const validateFields = () => {
-    if (!title || !description || !localisation || !date || !timeStart || !timeEnd || !seats || !type || !image) {
+    if (
+      !title ||
+      !description ||
+      !localisation ||
+      !date ||
+      !timeStart ||
+      !timeEnd ||
+      !seats ||
+      !type ||
+      !image
+    ) {
       Alert.alert('Erreur', 'Veuillez remplir tous les champs obligatoires');
       return false;
     }
     if (type === 'paid' && (!amount || amount <= 0)) {
-      Alert.alert('Erreur', 'Veuillez saisir un montant valide pour les événements payants');
+      Alert.alert(
+        'Erreur',
+        'Veuillez saisir un montant valide pour les événements payants',
+      );
       return false;
     }
     return true;
@@ -74,7 +87,7 @@ const CreateEventScreen = ({ route, navigation }) => {
 
   const createEvent = async () => {
     if (!validateFields()) return;
-  
+
     const newEvent = {
       createur: userInfo.id,
       image,
@@ -89,7 +102,7 @@ const CreateEventScreen = ({ route, navigation }) => {
       localisation,
       description,
     };
-  
+
     const result = await creerEvenement(newEvent);
     if (result.success) {
       Alert.alert('Succès', 'Événement créé avec succès');
@@ -98,10 +111,9 @@ const CreateEventScreen = ({ route, navigation }) => {
       Alert.alert('Erreur', result.message);
     }
   };
-  
 
   const selectImage = () => {
-    ImagePicker.launchImageLibrary({ mediaType: 'photo' }, (response) => {
+    ImagePicker.launchImageLibrary({mediaType: 'photo'}, response => {
       if (response.assets && response.assets.length > 0) {
         setImage(response.assets[0].uri);
       }
@@ -136,140 +148,140 @@ const CreateEventScreen = ({ route, navigation }) => {
 
   if (error) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Erreur: {error}</Text>
-      </View>
+      <ScrollView style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Erreur: {error}</Text>
+        </View>
+      </ScrollView>
+    );
+  } else {
+    return (
+      <ScrollView style={styles.container}>
+        {image && <Image source={{uri: image}} style={styles.image} />}
+        <TouchableOpacity style={styles.saveButton} onPress={selectImage}>
+          <Text style={styles.saveButtonText}>Choisir la photo</Text>
+        </TouchableOpacity>
+
+        <Text>Type</Text>
+        <Card>
+          <Picker
+            selectedValue={type}
+            onValueChange={itemValue => setType(itemValue)}>
+            <Picker.Item label="Gratuit" value="free" />
+            <Picker.Item label="Payant" value="paid" />
+          </Picker>
+        </Card>
+        {type === 'paid' && (
+          <TextInput
+            style={styles.input}
+            placeholder="Montant"
+            keyboardType="numeric"
+            value={amount.toString()}
+            onChangeText={value => setAmount(value ? parseFloat(value) : '')}
+          />
+        )}
+
+        <Text>Confidentialité</Text>
+        <Card>
+          <Picker
+            selectedValue={privacy}
+            onValueChange={itemValue => setPrivacy(itemValue)}>
+            <Picker.Item label="Public" value="public" />
+            <Picker.Item label="Privé" value="private" />
+          </Picker>
+        </Card>
+
+        <TextInput
+          style={styles.input}
+          placeholder="Titre de l'événement"
+          value={title}
+          onChangeText={setTitle}
+        />
+
+        <TextInput
+          style={styles.input}
+          placeholder="Localisation"
+          value={localisation}
+          onChangeText={setLocalisation}
+        />
+
+        <Text>Date</Text>
+        <TouchableOpacity onPress={() => setShowDatePicker(true)}>
+          <TextInput
+            style={styles.input}
+            placeholder="Sélectionner une date"
+            value={date.toDateString()}
+            editable={false}
+          />
+        </TouchableOpacity>
+        {showDatePicker && (
+          <DateTimePicker
+            value={date}
+            mode="date"
+            display="default"
+            onChange={handleDateChange}
+          />
+        )}
+
+        <Text>Heure de début</Text>
+        <TouchableOpacity onPress={() => setShowTimeStartPicker(true)}>
+          <TextInput
+            style={styles.input}
+            placeholder="Sélectionner une heure de début"
+            value={timeStart.toLocaleTimeString()}
+            editable={false}
+          />
+        </TouchableOpacity>
+        {showTimeStartPicker && (
+          <DateTimePicker
+            value={timeStart}
+            mode="time"
+            display="default"
+            onChange={handleTimeStartChange}
+          />
+        )}
+
+        <Text>Heure de fin</Text>
+        <TouchableOpacity onPress={() => setShowTimeEndPicker(true)}>
+          <TextInput
+            style={styles.input}
+            placeholder="Sélectionner une heure de fin"
+            value={timeEnd.toLocaleTimeString()}
+            editable={false}
+          />
+        </TouchableOpacity>
+        {showTimeEndPicker && (
+          <DateTimePicker
+            value={timeEnd}
+            mode="time"
+            display="default"
+            onChange={handleTimeEndChange}
+          />
+        )}
+
+        <TextInput
+          style={styles.input}
+          placeholder="Nombre de places"
+          keyboardType="numeric"
+          value={seats.toString()}
+          onChangeText={value => setSeats(value ? parseInt(value) : '')}
+        />
+
+        <TextInput
+          style={styles.input}
+          placeholder="Description"
+          multiline
+          numberOfLines={4}
+          value={description}
+          onChangeText={setDescription}
+        />
+
+        <TouchableOpacity style={styles.saveButton} onPress={createEvent}>
+          <Text style={styles.saveButtonText}>Enregistrer</Text>
+        </TouchableOpacity>
+      </ScrollView>
     );
   }
-
-  return (
-    <ScrollView style={styles.container}>
-      {image && <Image source={{ uri: image }} style={styles.image} />}
-      <TouchableOpacity style={styles.saveButton} onPress={selectImage}>
-        <Text style={styles.saveButtonText}>Choisir la photo</Text>
-      </TouchableOpacity>
-
-      <Text>Type</Text>
-      <Card>
-        <Picker
-          selectedValue={type}
-          onValueChange={(itemValue) => setType(itemValue)}
-        >
-          <Picker.Item label="Gratuit" value="free" />
-          <Picker.Item label="Payant" value="paid" />
-        </Picker>
-      </Card>
-      {type === 'paid' && (
-        <TextInput
-          style={styles.input}
-          placeholder="Montant"
-          keyboardType="numeric"
-          value={amount.toString()}
-          onChangeText={(value) => setAmount(value ? parseFloat(value) : '')}
-        />
-      )}
-
-      <Text>Confidentialité</Text>
-      <Card>
-        <Picker
-          selectedValue={privacy}
-          onValueChange={(itemValue) => setPrivacy(itemValue)}
-        >
-          <Picker.Item label="Public" value="public" />
-          <Picker.Item label="Privé" value="private" />
-        </Picker>
-      </Card>
-
-      <TextInput
-        style={styles.input}
-        placeholder="Titre de l'événement"
-        value={title}
-        onChangeText={setTitle}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Localisation"
-        value={localisation}
-        onChangeText={setLocalisation}
-      />
-
-      <Text>Date</Text>
-      <TouchableOpacity onPress={() => setShowDatePicker(true)}>
-        <TextInput
-          style={styles.input}
-          placeholder="Sélectionner une date"
-          value={date.toDateString()}
-          editable={false}
-        />
-      </TouchableOpacity>
-      {showDatePicker && (
-        <DateTimePicker
-          value={date}
-          mode="date"
-          display="default"
-          onChange={handleDateChange}
-        />
-      )}
-
-      <Text>Heure de début</Text>
-      <TouchableOpacity onPress={() => setShowTimeStartPicker(true)}>
-        <TextInput
-          style={styles.input}
-          placeholder="Sélectionner une heure de début"
-          value={timeStart.toLocaleTimeString()}
-          editable={false}
-        />
-      </TouchableOpacity>
-      {showTimeStartPicker && (
-        <DateTimePicker
-          value={timeStart}
-          mode="time"
-          display="default"
-          onChange={handleTimeStartChange}
-        />
-      )}
-
-      <Text>Heure de fin</Text>
-      <TouchableOpacity onPress={() => setShowTimeEndPicker(true)}>
-        <TextInput
-          style={styles.input}
-          placeholder="Sélectionner une heure de fin"
-          value={timeEnd.toLocaleTimeString()}
-          editable={false}
-        />
-      </TouchableOpacity>
-      {showTimeEndPicker && (
-        <DateTimePicker
-          value={timeEnd}
-          mode="time"
-          display="default"
-          onChange={handleTimeEndChange}
-        />
-      )}
-
-      <TextInput
-        style={styles.input}
-        placeholder="Nombre de places"
-        keyboardType="numeric"
-        value={seats.toString()}
-        onChangeText={(value) => setSeats(value ? parseInt(value) : '')}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Description"
-        multiline
-        numberOfLines={4}
-        value={description}
-        onChangeText={setDescription}
-      />
-
-      <TouchableOpacity style={styles.saveButton} onPress={createEvent}>
-        <Text style={styles.saveButtonText}>Enregistrer</Text>
-      </TouchableOpacity>
-    </ScrollView>
-  );
 };
 
 const styles = StyleSheet.create({

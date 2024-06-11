@@ -23,7 +23,7 @@ const ReservedTicketsScreen = ({ navigation }) => {
   const [userInfo, setUserInfo] = useState(null);
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
+  const [refreshing, setRefreshing] = useState(true);
 
   const viewShotRef = useRef(); // Référence pour capturer la vue
 
@@ -70,11 +70,12 @@ const ReservedTicketsScreen = ({ navigation }) => {
   const refreshPublications = () => {
     setRefreshing(true);
     fetchData();
-    setRefreshing(false);
+    setRefreshing(true);
   };
 
   // Gestion de l'annulation de la réservation
   const handleCancelReservation = async (reservationId) => {
+    console.log(reservationId);
     try {
       const response = await fetch(`${API_URL}/reservations/${reservationId}`, {
         method: 'DELETE',
@@ -205,7 +206,6 @@ const ReservedTicketsScreen = ({ navigation }) => {
             <Card.Actions>
               <Button onPress={() => handleCancelReservation(res.id)}>Annuler</Button>
               <Button onPress={() => handleViewTicket(res)}>Voir le ticket</Button>
-              <Button onPress={() => handlePayPress(res.amount)}>Payer</Button>
             </Card.Actions>
           </Card>
         ))

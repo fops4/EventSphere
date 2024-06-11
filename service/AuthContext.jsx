@@ -1,6 +1,7 @@
 // AuthContext.js
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {API_URL} from '../api';
 
 const AuthContext = createContext();
 
@@ -32,7 +33,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      const response = await fetch('http://10.0.2.2:3000/api/logout', {
+      const response = await fetch(`${API_URL}/logout`, {
         method: 'POST',
         credentials: 'include',
       });

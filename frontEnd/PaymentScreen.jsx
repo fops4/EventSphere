@@ -5,16 +5,19 @@ import { CardField, useStripe } from '@stripe/stripe-react-native';
 import { Button } from 'react-native-paper';
 import { useRoute } from '@react-navigation/native';
 import { API_URL } from '../service/api';
+import { useNavigation } from '@react-navigation/native';
 
 const PaymentScreen = () => {
   const route = useRoute();
-  const { amount } = route.params;
+  const { amount, reserveur, evenement_id } = route.params;
   const { confirmPayment, retrievePaymentIntent } = useStripe();
   const [loading, setLoading] = useState(false);
+  const navigation = useNavigation();
 
   const handlePayPress = async () => {
     console.log("PaymentScreen: handlePayPress called with amount:", amount);
     setLoading(true);
+    console.log(amount, reserveur, evenement_id);
 
     try {
       // Créer un PaymentIntent sur votre serveur
@@ -50,12 +53,41 @@ const PaymentScreen = () => {
       } else {
         console.log("Payment successful");
         Alert.alert('Payment successful', 'Thank you for your purchase!');
+        handleReserve ();
       }
     } catch (error) {
       console.log("Payment error:", error.message);
       Alert.alert('Payment error', error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleReserve = async () => {
+    const currentDate = new Date().toISOString().split('T')[0];
+    try {
+      const response = await fetch(`${API_URL}/reservations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reserveur,
+          evenement_id,
+          reservation_date: currentDate,
+        }),
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        Alert.alert('Succès', 'Réservation effectuée avec succès');
+        navigation.navigate('ReservedTicketsScreen');
+      } else {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || "Erreur lors de la réservation de l'événement"
+        );
+      }
+    } catch (error) {
+      Alert.alert('Erreur', error.message);
     }
   };
 

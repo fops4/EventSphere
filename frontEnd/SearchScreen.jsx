@@ -12,6 +12,8 @@ import {
 import { TextInput, Card, Title, Paragraph, Text, Button, IconButton } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { API_URL } from '../service/api';
+import { useNavigation } from '@react-navigation/native';
+  
 
 const SearchScreen = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -21,6 +23,7 @@ const SearchScreen = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [userInfo, setUserInfo] = useState(null);
+  const navigation = useNavigation();
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -117,6 +120,17 @@ const SearchScreen = () => {
     setSelectedEvent(event);
     setModalVisible(true);
   };
+
+    // Gestion du paiement
+    const handlePayPress = (amount, id) => {
+      console.log(amount, userInfo.id, id);
+      if (amount) {
+        navigation.navigate('PaymentScreen', { amount, reserveur: userInfo.id,
+          evenement_id: id, });
+      } else {
+        Alert.alert('Erreur', 'Le montant de l\'événement n\'est pas défini');
+      }
+    };
 
   const renderItem = ({ item }) => (
     <Card style={styles.card}>
@@ -219,7 +233,7 @@ const SearchScreen = () => {
         </Card.Content>
         <Card.Actions style={styles.btn_modale}>
           <Button onPress={() => setModalVisible(false)}>Fermer</Button>
-          <Button onPress={() => handleReserve(selectedEvent.id)}>Réserver</Button>
+          <Button onPress={() => handlePayPress(selectedEvent.amount, selectedEvent.id)}>Réserver</Button>
         </Card.Actions>
       </View>
     </Modal>
