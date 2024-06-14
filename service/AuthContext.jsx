@@ -1,9 +1,9 @@
 // AuthContext.js
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {API_URL} from '../api';
 
 const AuthContext = createContext();
+const API_URL = 'http://192.168.134.47:3000/api';
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);

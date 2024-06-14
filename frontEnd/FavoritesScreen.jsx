@@ -1,18 +1,20 @@
-// screens/FavoritesScreen.js
-import React, {useState, useEffect} from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
-  ScrollView,
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
   Alert,
   Share,
+  RefreshControl,
+  FlatList,
+  ScrollView
 } from 'react-native';
-import {Text, Card, Title, Paragraph, Button} from 'react-native-paper';
-import {API_URL} from '../service/api';
+import { useFocusEffect } from '@react-navigation/native';
+import { Text, Card, Title, Paragraph, Button } from 'react-native-paper';
+import { API_URL } from '../service/api';
 
-const FavoritesScreen = ({navigation, route}) => {
+const FavoritesScreen = ({ navigation, route }) => {
   const [userInfo, setUserInfo] = useState(route.params?.userInfo || null);
   const [events, setEvents] = useState([]);
   const [loadingUserInfo, setLoadingUserInfo] = useState(true);
@@ -20,61 +22,60 @@ const FavoritesScreen = ({navigation, route}) => {
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        const response = await fetch(`${API_URL}/me`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setUserInfo(data.user);
-        } else {
-          throw new Error('Failed to fetch user info');
-        }
-      } catch (error) {
-        setError(error.message);
-        Alert.alert('Erreur', error.message);
-      } finally {
-        setLoadingUserInfo(false);
+  const fetchEvents = async () => {
+    if (!userInfo?.id) return;
+    setLoadingEvents(true); // Set loading true before fetching
+    try {
+      const response = await fetch(`${API_URL}/evenements/${userInfo.id}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setEvents(data.evenements);
+      } else {
+        setError(data.message);
       }
-    };
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoadingEvents(false); // Set loading false after fetching
+    }
+  };
 
+  const fetchUserInfo = async () => {
+    try {
+      const response = await fetch(`${API_URL}/me`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setUserInfo(data.user);
+      } else {
+        throw new Error('Failed to fetch user info');
+      }
+    } catch (error) {
+      setError(error.message);
+      Alert.alert('Erreur', error.message);
+    } finally {
+      setLoadingUserInfo(false);
+    }
+  };
+
+  useEffect(() => {
     fetchUserInfo();
   }, []);
 
   useEffect(() => {
-    if (userInfo?.id) {
-      const fetchEvents = async () => {
-        try {
-          const response = await fetch(`${API_URL}/evenements/${userInfo.id}`, {
-            method: 'GET',
-            credentials: 'include',
-          });
-          const data = await response.json();
-          if (response.ok) {
-            setEvents(data.evenements);
-          } else {
-            setError(data.message);
-          }
-        } catch (error) {
-          setError(error.message);
-        } finally {
-          setLoadingEvents(false);
-        }
-      };
-
-      fetchEvents();
-    }
+    fetchEvents();
   }, [userInfo]);
 
-  const refreshPublications = () => {
-    setRefreshing(true);
-    fetchEvents();
-    setRefreshing(false);
-  };
-
+  useFocusEffect(
+    useCallback(() => {
+      fetchEvents();
+    }, [userInfo])
+  );
   const handleShare = async event => {
     try {
       await Share.share({
@@ -139,8 +140,10 @@ const FavoritesScreen = ({navigation, route}) => {
 
   if (error) {
     return (
-      <ScrollView style={styles.container} onRefresh={refreshPublications}>
-        <Text style={styles.sectionTitle}>Mes événements</Text>
+      <ScrollView style={styles.container}>
+        <TouchableOpacity onPress={() => setLoadingEvents}>
+          <Text style={styles.sectionTitle}>Mes événements</Text>
+        </TouchableOpacity>
         <TouchableOpacity
           style={styles.saveButton}
           onPress={() => navigation.navigate('CreateEventScreen')}>
@@ -155,7 +158,7 @@ const FavoritesScreen = ({navigation, route}) => {
     );
   } else {
     return (
-      <ScrollView style={styles.container} onRefresh={refreshPublications}>
+      <ScrollView style={styles.container} >
         <Text style={styles.sectionTitle}>Mes événements</Text>
         <TouchableOpacity
           style={styles.saveButton}

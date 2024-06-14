@@ -1,64 +1,70 @@
-import React, {useState, useEffect} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   View,
   StyleSheet,
   ScrollView,
-  Image,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
-import {Text, Avatar, Button, Card, Title, Paragraph} from 'react-native-paper';
-import { useAuth } from '../service/AuthContext';
-import { API_URL } from '../service/api';
+import {Text, Avatar, Button, Title} from 'react-native-paper';
+import {useAuth} from '../service/AuthContext';
+import {API_URL} from '../service/api';
+import {useFocusEffect} from '@react-navigation/native';
 
 const ProfileScreen = ({navigation, route}) => {
   const [userInfo, setUserInfo] = useState(route.params?.userInfo || null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const {user, logout} = useAuth();
 
-  const { user, logout } = useAuth();
+  const fetchUserInfo = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/me`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setUserInfo(data.user);
+      } else {
+        throw new Error('Failed to fetch user info');
+      }
+    } catch (error) {
+      setError(error.message);
+      Alert.alert('Erreur', error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = async () => {
     const success = await logout();
     if (success) {
-      navigation.navigate('Connexion'); 
+      navigation.navigate('Connexion');
     } else {
       Alert.alert('Erreur', 'Déconnexion échouée. Veuillez réessayer.');
     }
   };
 
   useEffect(() => {
-    // Function to fetch user info from backend
-    const fetchUserInfo = async () => {
-      try {
-        const response = await fetch(`${API_URL}/me`, {
-          method: 'GET',
-          credentials: 'include', // This will send cookies with the request
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setUserInfo(data.user);
-        } else {
-          throw new Error('Failed to fetch user info');
-        }
-      } catch (error) {
-        setError(error.message);
-        Alert.alert('Erreur', error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchUserInfo();
   }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      fetchUserInfo();
+    }, []),
+  );
 
-  if (loading)
+  if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#0000ff" />
       </View>
     );
+  }
 
   if (error) {
     return (
@@ -74,13 +80,17 @@ const ProfileScreen = ({navigation, route}) => {
         <Avatar.Image
           size={100}
           source={
-            userInfo?.selectedImage
+            userInfo && userInfo.selectedImage
               ? {uri: userInfo.selectedImage}
               : require('../images/Utilisateur.png')
           }
         />
-        <Text style={styles.userName}>{userInfo.username}</Text>
-        <Text style={styles.userEmail}>{userInfo.email}</Text>
+        <Text style={styles.userName}>
+          {userInfo?.username || 'Nom Utilisateur'}
+        </Text>
+        <Text style={styles.userEmail}>
+          {userInfo?.email || 'Email non disponible'}
+        </Text>
       </View>
 
       <TouchableOpacity
@@ -209,6 +219,20 @@ const styles = StyleSheet.create({
   sectionContent: {
     fontSize: 14,
     color: '#555',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    fontSize: 18,
+    color: 'red',
   },
 });
 

@@ -111,14 +111,7 @@ const EditProfileScreen = ({ route, navigation }) => {
             <Image source={{ uri: selectedImage }} style={styles.profileImage} />
           </View>
         )}
-        <Avatar.Image
-          size={100}
-          source={
-            userInfo?.selectedImage
-              ? { uri: userInfo.selectedImage }
-              : require('../images/Utilisateur.png')
-          }
-        />
+
         <Text style={styles.updateImageText}>Actualiser l'image</Text>
         <TouchableOpacity style={styles.btn_cu}>
           <IconButton

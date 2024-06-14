@@ -1,5 +1,6 @@
 // Chemin : /src/screens/ReservedTicketsScreen.js
-import React, { useState, useEffect, useRef } from 'react';
+import React, {useState, useEffect, useRef, useCallback} from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   ScrollView,
@@ -8,15 +9,16 @@ import {
   Modal,
   Alert,
   Share,
+  TouchableOpacity,
 } from 'react-native';
-import { Text, Card, Title, Paragraph, Button } from 'react-native-paper';
+import {Text, Card, Title, Paragraph, Button} from 'react-native-paper';
 import QRCode from 'react-native-qrcode-svg';
-import { API_URL } from '../service/api';
+import {API_URL} from '../service/api';
 import ViewShot from 'react-native-view-shot';
 import RNHTMLtoPDF from 'react-native-html-to-pdf';
 import RNFS from 'react-native-fs';
 
-const ReservedTicketsScreen = ({ navigation }) => {
+const ReservedTicketsScreen = ({navigation}) => {
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -27,8 +29,7 @@ const ReservedTicketsScreen = ({ navigation }) => {
 
   const viewShotRef = useRef(); // Référence pour capturer la vue
 
-  // Fetch user info and reservations
-  useEffect(() => {
+
     const fetchData = async () => {
       try {
         const userResponse = await fetch(`${API_URL}/me`, {
@@ -38,20 +39,27 @@ const ReservedTicketsScreen = ({ navigation }) => {
 
         if (!userResponse.ok) {
           const errorText = await userResponse.text();
-          throw new Error(`Échec de la récupération des infos utilisateur : ${errorText}`);
+          throw new Error(
+            `Échec de la récupération des infos utilisateur : ${errorText}`,
+          );
         }
 
         const userData = await userResponse.json();
         setUserInfo(userData.user);
 
-        const reservationsResponse = await fetch(`${API_URL}/mes-reservations/${userData.user.id}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
+        const reservationsResponse = await fetch(
+          `${API_URL}/mes-reservations/${userData.user.id}`,
+          {
+            method: 'GET',
+            credentials: 'include',
+          },
+        );
 
         if (!reservationsResponse.ok) {
           const errorText = await reservationsResponse.text();
-          throw new Error(`Échec de la récupération des réservations : ${errorText}`);
+          throw new Error(
+            `Échec de la récupération des réservations : ${errorText}`,
+          );
         }
 
         const reservationsData = await reservationsResponse.json();
@@ -64,17 +72,15 @@ const ReservedTicketsScreen = ({ navigation }) => {
       }
     };
 
-    fetchData();
-  }, []);
 
-  const refreshPublications = () => {
-    setRefreshing(true);
-    fetchData();
-    setRefreshing(true);
-  };
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [])
+  );
 
   // Gestion de l'annulation de la réservation
-  const handleCancelReservation = async (reservationId) => {
+  const handleCancelReservation = async reservationId => {
     console.log(reservationId);
     try {
       const response = await fetch(`${API_URL}/reservations/${reservationId}`, {
@@ -84,7 +90,9 @@ const ReservedTicketsScreen = ({ navigation }) => {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Erreur lors de l'annulation de la réservation : ${errorText}`);
+        throw new Error(
+          `Erreur lors de l'annulation de la réservation : ${errorText}`,
+        );
       }
 
       setReservations(reservations.filter(res => res.id !== reservationId));
@@ -95,7 +103,7 @@ const ReservedTicketsScreen = ({ navigation }) => {
   };
 
   // Gestion de l'affichage du ticket
-  const handleViewTicket = (reservation) => {
+  const handleViewTicket = reservation => {
     setSelectedTicket(reservation);
     setModalVisible(true);
   };
@@ -107,11 +115,11 @@ const ReservedTicketsScreen = ({ navigation }) => {
   };
 
   // Gestion du paiement
-  const handlePayPress = (amount) => {
+  const handlePayPress = amount => {
     if (amount) {
-      navigation.navigate('PaymentScreen', { amount });
+      navigation.navigate('PaymentScreen', {amount});
     } else {
-      Alert.alert('Erreur', 'Le montant de l\'événement n\'est pas défini');
+      Alert.alert('Erreur', "Le montant de l'événement n'est pas défini");
     }
   };
 
@@ -120,21 +128,21 @@ const ReservedTicketsScreen = ({ navigation }) => {
     try {
       console.log('Début de la capture de la vue...');
       const uri = await viewShotRef.current.capture(); // Capture la vue en image
-      console.log('URI de l\'image capturée:', uri);
+      console.log("URI de l'image capturée:", uri);
 
       const pdfPath = await createPDF(uri); // Crée le PDF à partir de l'image
       console.log('Chemin du fichier PDF:', pdfPath);
 
-      await Share.share({ url: `file://${pdfPath}` }); // Partage le PDF
+      await Share.share({url: `file://${pdfPath}`}); // Partage le PDF
       console.log('Partage du PDF réussi');
     } catch (error) {
       console.error('Erreur lors de la capture ou du partage:', error);
-      Alert.alert('Erreur', 'Échec de la capture ou du partage de l\'image');
+      Alert.alert('Erreur', "Échec de la capture ou du partage de l'image");
     }
   };
 
   // Fonction pour créer un PDF
-  const createPDF = async (imagePath) => {
+  const createPDF = async imagePath => {
     try {
       const base64Image = await RNFS.readFile(imagePath, 'base64');
       const htmlContent = `
@@ -150,7 +158,7 @@ const ReservedTicketsScreen = ({ navigation }) => {
           </div>
         </body>
         </html>`;
-      
+
       const options = {
         html: htmlContent,
         fileName: 'ticket',
@@ -168,9 +176,12 @@ const ReservedTicketsScreen = ({ navigation }) => {
   // Fonction pour capturer le QR code
   const captureQRCode = async () => {
     return new Promise((resolve, reject) => {
-      viewShotRef.current.capture().then(uri => {
-        RNFS.readFile(uri, 'base64').then(resolve).catch(reject);
-      }).catch(reject);
+      viewShotRef.current
+        .capture()
+        .then(uri => {
+          RNFS.readFile(uri, 'base64').then(resolve).catch(reject);
+        })
+        .catch(reject);
     });
   };
 
@@ -191,21 +202,29 @@ const ReservedTicketsScreen = ({ navigation }) => {
   }
 
   return (
-    <ScrollView style={styles.container} onRefresh={refreshPublications}>
-      <Text style={styles.sectionTitle}>Mes réservations</Text>
+    <ScrollView style={styles.container}>
+      <TouchableOpacity onPress={() =>setLoading}>
+        <Text style={styles.sectionTitle}>Mes réservations</Text>
+      </TouchableOpacity>
       {reservations.length > 0 ? (
         reservations.map(res => (
           <Card key={res.id} style={styles.card}>
-            <Card.Cover source={{ uri: res.image }} />
+            <Card.Cover source={{uri: res.image}} />
             <Card.Content>
               <Title>{res.title}</Title>
-              <Paragraph>Date : {new Date(res.date).toLocaleString()}</Paragraph>
+              <Paragraph>
+                Date : {new Date(res.date).toLocaleString()}
+              </Paragraph>
               <Paragraph>Description : {res.description}</Paragraph>
               <Paragraph>Localisation : {res.localisation}</Paragraph>
             </Card.Content>
             <Card.Actions>
-              <Button onPress={() => handleCancelReservation(res.id)}>Annuler</Button>
-              <Button onPress={() => handleViewTicket(res)}>Voir le ticket</Button>
+              <Button onPress={() => handleCancelReservation(res.id)}>
+                Annuler
+              </Button>
+              <Button onPress={() => handleViewTicket(res)}>
+                Voir le ticket
+              </Button>
             </Card.Actions>
           </Card>
         ))
@@ -220,7 +239,7 @@ const ReservedTicketsScreen = ({ navigation }) => {
           transparent={true}
           onRequestClose={handleCloseModal}>
           <View style={styles.modalContainer}>
-            <ViewShot ref={viewShotRef} options={{ format: "jpg", quality: 0.9 }}>
+            <ViewShot ref={viewShotRef} options={{format: 'jpg', quality: 0.9}}>
               <Card style={styles.modalCard}>
                 <Card.Content>
                   <View style={styles.qrCodeContainer}>
@@ -231,15 +250,21 @@ const ReservedTicketsScreen = ({ navigation }) => {
                   <Text style={styles.ticketHeader}>Billet / place</Text>
                   <Text style={styles.ticketContent}>Admission générale</Text>
                   <Text style={styles.ticketHeader}>Événement</Text>
-                  <Text style={styles.ticketContent}>{selectedTicket.title}</Text>
+                  <Text style={styles.ticketContent}>
+                    {selectedTicket.title}
+                  </Text>
                   <Text style={styles.ticketHeader}>Date</Text>
                   <Text style={styles.ticketContent}>
                     {new Date(selectedTicket.date).toLocaleString()}
                   </Text>
                   <Text style={styles.ticketHeader}>Localisation</Text>
-                  <Text style={styles.ticketContent}>{selectedTicket.localisation}</Text>
+                  <Text style={styles.ticketContent}>
+                    {selectedTicket.localisation}
+                  </Text>
                   <Text style={styles.ticketHeader}>Résumé événement</Text>
-                  <Text style={styles.ticketContent}>{selectedTicket.description}</Text>
+                  <Text style={styles.ticketContent}>
+                    {selectedTicket.description}
+                  </Text>
                 </Card.Content>
                 <Card.Actions>
                   <Button onPress={captureAndSharePDF}>Exporter en PDF</Button>
